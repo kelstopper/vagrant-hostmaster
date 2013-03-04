@@ -32,7 +32,7 @@ module Vagrant
 
       def hosts_path
         # TODO: if windows guests are supported, this will need to be smarter
-        "/etc/hosts"
+        Util::Platform.windows? ? 'c:\Windows\System32\drivers\etc\hosts' : "/etc/hosts"
       end
 
       def list(options = {})
@@ -73,7 +73,11 @@ module Vagrant
         def add_command(options = {})
           uuid = options[:uuid] || self.uuid
           hosts_path = options[:hosts_path] || self.class.hosts_path
-          %Q(sh -c 'echo "#{host_entry(uuid)}" >>#{hosts_path}')
+          if Util::Platform.windows?
+            %Q(echo #{host_entry(uuid)} >> #{hosts_path})
+          else
+            %Q(sh -c 'echo "#{host_entry(uuid)}" >>#{hosts_path}')
+          end
         end
 
         def address
@@ -128,7 +132,18 @@ module Vagrant
         def remove_command(options = {})
           uuid = options[:uuid] || self.uuid
           hosts_path = options[:hosts_path] || self.class.hosts_path
-          %Q(sed -e '/#{signature(uuid)}$/ d' -ibak #{hosts_path})
+          if Util::Platform.windows?
+            #find and replace isn't going to work here.
+            hosts = ""
+            FileUtils.copy hosts_path, "#{hosts_path}.bak"
+            File.open("#{hosts_path}").each do |line|
+              hosts << line unless line.include?(signature(uuid))
+            end
+            File.open("#{hosts_path}", "w") {|file| file.puts hosts }
+            "echo done"
+          else
+            %Q(sed -e '/#{signature(uuid)}$/ d' -ibak #{hosts_path})
+          end
         end
 
         def signature(uuid = self.uuid)
