@@ -31,7 +31,6 @@ module Vagrant
       end
 
       def hosts_path
-        # TODO: if windows guests are supported, this will need to be smarter
         Util::Platform.windows? ? 'c:\Windows\System32\drivers\etc\hosts' : "/etc/hosts"
       end
 
@@ -133,7 +132,7 @@ module Vagrant
           uuid = options[:uuid] || self.uuid
           hosts_path = options[:hosts_path] || self.class.hosts_path
           if Util::Platform.windows?
-            #find and replace isn't going to work here.
+            # find and replace isn't going to work here as in the unix environment (no sed like application)
             hosts = ""
             FileUtils.copy hosts_path, "#{hosts_path}.bak"
             File.open("#{hosts_path}").each do |line|
