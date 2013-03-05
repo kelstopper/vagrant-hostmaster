@@ -139,7 +139,7 @@ module Vagrant
               hosts << line unless line.include?(signature(uuid))
             end
             File.open("#{hosts_path}", "w") {|file| file.puts hosts }
-            "echo done"
+            ""
           else
             %Q(sed -e '/#{signature(uuid)}$/ d' -ibak #{hosts_path})
           end
@@ -151,6 +151,7 @@ module Vagrant
 
         def sudo(command)
           if Util::Platform.windows?
+            return true if command == ""
             `#{command}`
           else
             `sudo #{command}`
